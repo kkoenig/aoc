@@ -26,6 +26,7 @@ yearday  = $(call year,$1)/$(call day, $1)
 input    = ./$(call yearday, $1)/input
 expected = ./$(call yearday, $1)/expected
 
+
 .SECONDEXPANSION:
 test-%-1: ./bin/$$(call yearday, %)/part1
 	diff <($< < $(call input, $*)) $(call expected, $*)1
