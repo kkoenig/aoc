@@ -1,3 +1,4 @@
+SHELL  := bash
 CC     := clang
 CFLAGS := -O3 -g \
 		  -Wextra \
