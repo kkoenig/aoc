@@ -5,7 +5,7 @@ bin/%: %.c
 	@mkdir -p $(@D)
 	$(CC) $< $(CFLAGS) -o $@
 
-BINS := bin/2015/1/part1 bin/2015/1/part2 bin/2015/2/part1
+BINS := bin/2015/1/part1 bin/2015/1/part2 bin/2015/2/part1 bin/2023/1/part1 bin/2023/1/part2
 build: $(BINS)
 
 test: $(BINS)
