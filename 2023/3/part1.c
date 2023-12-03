@@ -50,7 +50,7 @@ int main(void) {
   size_t buffer_size;
   ssize_t line_size;
 
-  // Loop through input data to get row count and column width
+  // Get rows,colls
   int rows = 0;
   int cols = 0;
   while (-1 != (line_size = getline(&buffer, &buffer_size, stdin))) {
@@ -59,68 +59,49 @@ int main(void) {
   };
   rewind(stdin);
 
-  typedef struct {
-    // original schematic value
-    char v;
-    // ..522..123.. -> 001110022200
-    // nth number index (0 for numbers)
-    int number_index;
-  } Cell;
-  Cell *table = calloc(1, sizeof(Cell) * rows * cols);
-
-#define MAX_SCHEMATIC_NUMBERS 10000
-  // List of all numbers that appear in the schematic
-  int schematic_numbers[MAX_SCHEMATIC_NUMBERS] = {0};
-  int total_numbers = 1;
+  // Copy input data into array
+  char *table = calloc(1, sizeof(char) * rows * cols);
   for (int r = 0; -1 != getline(&buffer, &buffer_size, stdin); ++r) {
-    for (int c = 0; c < cols;) {
-      if (isdigit(buffer[c])) {
-        int number = 0;
-        while (c < cols && isdigit(buffer[c])) {
-          number = 10 * number + buffer[c] - '0';
-          table[r * cols + c] = (Cell){
-              .v = buffer[c],
-              .number_index = total_numbers,
-          };
-          ++c;
-        }
-        schematic_numbers[total_numbers++] = number;
-      } else {
-        table[r * cols + c] = (Cell){.v = buffer[c]};
-        ++c;
-      }
+    for (int c = 0; c < cols; ++c) {
+      table[r * cols + c] = buffer[c];
     }
   }
+  free(buffer);
+  rewind(stdin);
 
-  int parts_seen[MAX_SCHEMATIC_NUMBERS] = {0};
+  ssize_t sum_of_part_numbers = 0;
   for (int r = 0; r < rows; ++r) {
-    for (int c = 0; c < cols; ++c) {
-      int ch = table[r * cols + c].v;
-      if (ch == '.' || isdigit(ch)) {
+    char *row = table + r * cols;
+    for (int c = 0; c < cols;) {
+      if (!isdigit(row[c])) {
+        ++c;
         continue;
       }
-      // Check all adjacent cells
-      // Don't need exclude (x, y) since parts_seen starts at 1 so we will
-      // just end up adding zero below
-      for (int y = r - 1; y <= r + 1; y += 1) {
-        for (int x = c - 1; x <= c + 1; x += 1) {
+      int b = c;
+      int number = 0;
+      while (c != cols && isdigit(row[c])) {
+        number = number * 10 + row[c] - '0';
+        ++c;
+      }
+
+      int part = 0;
+      for (int y = r - 1; y <= r + 1; ++y) {
+        for (int x = b - 1; x <= c; ++x) {
           if (y < 0 || y >= rows || x < 0 || x >= cols) {
             continue;
           }
-          parts_seen[table[y * cols + x].number_index] = 1;
+          const char adj = table[y * cols + x];
+          if (adj != '.' && !isdigit(adj)) {
+            part = 1;
+          }
         }
+      }
+      if (part) {
+        sum_of_part_numbers += number;
       }
     }
   }
-  ssize_t sum_of_part_numbers = 0;
-  for (int i = 0; i < total_numbers; ++i) {
-    if (parts_seen[i]) {
-      sum_of_part_numbers += schematic_numbers[i];
-    }
-  }
-
   printf("%zd", sum_of_part_numbers);
   free(table);
-  free(buffer);
   return 0;
 }
