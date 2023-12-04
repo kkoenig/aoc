@@ -61,7 +61,7 @@ int main(void) {
 
   // Copy input data into array
   char *table = calloc(1, sizeof(char) * rows * cols);
-  for (int r = 0; -1 != getline(&buffer, &buffer_size, stdin); ++r) {
+  for (int r = 0; - 1 != getline(&buffer, &buffer_size, stdin); ++r) {
     for (int c = 0; c < cols; ++c) {
       table[r * cols + c] = buffer[c];
     }
@@ -84,21 +84,17 @@ int main(void) {
         ++c;
       }
 
-      int part = 0;
+      int is_part = 0;
       for (int y = r - 1; y <= r + 1; ++y) {
         for (int x = b - 1; x <= c; ++x) {
           if (y < 0 || y >= rows || x < 0 || x >= cols) {
             continue;
           }
           const char adj = table[y * cols + x];
-          if (adj != '.' && !isdigit(adj)) {
-            part = 1;
-          }
+          is_part |= adj != '.' && !isdigit(adj);
         }
       }
-      if (part) {
-        sum_of_part_numbers += number;
-      }
+      sum_of_part_numbers += is_part * number;
     }
   }
   printf("%zd", sum_of_part_numbers);
