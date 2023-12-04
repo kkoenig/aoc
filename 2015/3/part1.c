@@ -21,28 +21,16 @@
 // presents to some very lucky children at only 2 houses.
 
 int main(void) {
-#define MAX_COORD 1000
-  int x = MAX_COORD, y = MAX_COORD;
-  char seen[4 * MAX_COORD * MAX_COORD] = {0};
-  seen[(x * 2 * MAX_COORD) + y] = 1;
-  char ch;
-  while ((ch = getchar()) != EOF) {
-    switch (ch) {
-    case '^':
-      --y;
-      break;
-    case 'v':
-      ++y;
-      break;
-    case '>':
-      ++x;
-      break;
-    case '<':
-      --x;
-      break;
-    }
+#define GRID_MAX 1000
+  char seen[GRID_MAX * GRID_MAX] = {0};
 
-    seen[y * 2 * MAX_COORD + x] = 1;
+  int location = GRID_MAX * GRID_MAX / 2;
+  seen[location] = 1;
+  int move[255] = {['^'] = -GRID_MAX, ['v'] = GRID_MAX, ['>'] = 1, ['<'] = -1};
+  int ch;
+  while ((ch = getchar()) != EOF) {
+    location += move[ch];
+    seen[location] = 1;
   }
 
   int total_seen = 0;
