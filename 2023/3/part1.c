@@ -45,25 +45,26 @@
 //
 // Of course, the actual engine schematic is much larger. What is the sum of all
 // of the part numbers in the engine schematic?
+int is_part_marker(const char c) { return c != '.' && !isdigit(c) && c != 0; }
 int main(void) {
   char *buffer = NULL;
   size_t buffer_size;
   ssize_t line_size;
 
   // Get rows,colls
-  int rows = 0;
+  int rows = 2 /* padding */;
   int cols = 0;
   while (-1 != (line_size = getline(&buffer, &buffer_size, stdin))) {
-    cols = line_size - 1;
+    cols = line_size - 1 + 2 /* padding */;
     ++rows;
   };
   rewind(stdin);
 
   // Copy input data into array
   char *table = calloc(1, sizeof(char) * rows * cols);
-  for (int r = 0; - 1 != getline(&buffer, &buffer_size, stdin); ++r) {
-    for (int c = 0; c < cols; ++c) {
-      table[r * cols + c] = buffer[c];
+  for (int r = 1; - 1 != getline(&buffer, &buffer_size, stdin); ++r) {
+    for (int c = 1; c < cols - 1; ++c) {
+      table[r * cols + c] = buffer[c - 1];
     }
   }
   free(buffer);
@@ -87,11 +88,7 @@ int main(void) {
       int is_part = 0;
       for (int y = r - 1; y <= r + 1; ++y) {
         for (int x = b - 1; x <= c; ++x) {
-          if (y < 0 || y >= rows || x < 0 || x >= cols) {
-            continue;
-          }
-          const char adj = table[y * cols + x];
-          is_part |= adj != '.' && !isdigit(adj);
+          is_part |= is_part_marker(table[y * cols + x]);
         }
       }
       sum_of_part_numbers += is_part * number;
