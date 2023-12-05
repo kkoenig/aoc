@@ -1,8 +1,8 @@
 SHELL  := bash
 CC     := clang
 CFLAGS := -O3 -g \
+		  -I./deps \
 		  -Wextra \
-		  -Werror \
 		  -Wall \
 		  -fsanitize=undefined \
 		  -fsanitize=integer \
@@ -16,7 +16,7 @@ build: $(TARGETS)
 
 test: $(TESTS)
 
-bin/%: %.c
+bin/%: %.c deps/cpt.h Makefile
 	@mkdir -p $(@D)
 	$(CC) $< $(CFLAGS) -o $@
 
@@ -36,5 +36,9 @@ test-%-2: ./bin/$$(call yearday, %)/part2
 
 clean:
 	rm -rf ./bin
+
+deps/cpt.h:
+	@mkdir -p $(@D)
+	curl -sLo $@ https://raw.githubusercontent.com/kkoenig/cpt/main/cpt.h
 
 .PHONY: build test clean
