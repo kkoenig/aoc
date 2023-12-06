@@ -75,7 +75,7 @@ int main(void) {
   int num_pipeline_inputs[8] = {0};
   range inputs[8][MAX_PIPELINE_INPUTS] = {0};
 
-  const cpt_buffer2d input = cpt_slurp2d_buffer(cpt_slurp_stdin());
+  cpt_buffer2d input = cpt_slurp2d_stdin();
   int current_row = 0;
   {
     // read seeds
@@ -148,6 +148,7 @@ int main(void) {
     min = CPT_MIN((size_t)inputs[7][i].begin, min);
   }
   printf("%zu\n", min);
+  cpt_buffer2d_free(&input);
 
   return 0;
 }

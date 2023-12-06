@@ -7,7 +7,7 @@ int main(void) {
   uint64_t inputs[8][INPUTS_MAX] = {0};
   int num_inputs = 0;
 
-  const cpt_buffer2d input = cpt_slurp2d_buffer(cpt_slurp_stdin());
+  cpt_buffer2d input = cpt_slurp2d_stdin();
   int current_row = 0;
   {
     // read seeds
@@ -49,6 +49,6 @@ int main(void) {
     min = CPT_MIN((size_t)inputs[7][i], min);
   }
   printf("%zu\n", min);
-
+  cpt_buffer2d_free(&input);
   return 0;
 }
