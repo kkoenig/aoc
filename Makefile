@@ -39,6 +39,6 @@ clean:
 
 deps/cpt.h:
 	@mkdir -p $(@D)
-	curl -sLo $@ https://raw.githubusercontent.com/kkoenig/cpt/d585f2ab914b04829ed22905fe5355c8e4ec77fc/cpt.h
+	curl -sLo $@ https://raw.githubusercontent.com/kkoenig/cpt/e038f7c0b88cdf5f09b4752bdcfe920d7b0b14d3/cpt.h
 
 .PHONY: build test clean
