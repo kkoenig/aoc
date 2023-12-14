@@ -1,5 +1,6 @@
 #include "cpt.h"
 #include "math.h"
+#include <inttypes.h>
 
 int main(void) {
   cpt_buffer2d input = cpt_slurp2d_stdin();
@@ -44,7 +45,7 @@ int main(void) {
     }
   }
 
-  printf("%lld\n", sum);
+  printf("%" PRIi64 "\n", sum);
   cpt_buffer2d_free(&input);
   return 0;
 }

@@ -54,7 +54,11 @@ int main(void) {
     total += count_run(inputs[i], input_length);
   }
   printf("%d\n", total);
+  for (size_t i = 0; i < input.max_column_width; ++i) {
+    free(inputs[i]);
+  }
 
+  free(inputs);
   cpt_buffer2d_free(&input);
   return 0;
 }
