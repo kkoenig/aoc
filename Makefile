@@ -3,6 +3,7 @@ CC     := clang
 CFLAGS := -O3 -g \
 		  -I./deps \
 		  -Wextra \
+		  -Wextra \
 		  -Wall \
 		  -fsanitize=undefined \
 		  -fsanitize=integer \
@@ -26,13 +27,12 @@ yearday  = $(call year,$1)/$(call day, $1)
 input    = ./$(call yearday, $1)/input
 expected = ./$(call yearday, $1)/expected
 
-
 .SECONDEXPANSION:
 test-%-1: ./bin/$$(call yearday, %)/part1
-	diff <($< < $(call input, $*)) $(call expected, $*)1
+	diff <(time $< < $(call input, $*)) $(call expected, $*)1
 
 test-%-2: ./bin/$$(call yearday, %)/part2
-	diff <($< < $(call input, $*)) $(call expected, $*)2
+	diff <(time $< < $(call input, $*)) $(call expected, $*)2
 
 clean:
 	rm -rf ./bin
