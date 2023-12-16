@@ -74,56 +74,16 @@ void cast_beam(facility *f, int r, int c, int direction) {
   }
 }
 
-void print(facility *f) {
-  for (int r = 0; r < f->rows; ++r) {
-    for (int c = 0; c < f->cols; ++c) {
-      const int x = f->grid[r][c].activation;
-      if ('.' != f->grid[r][c].c) {
-        putchar(f->grid[r][c].c);
-        continue;
-      }
-      switch (x) {
-      case UP:
-        putchar('^');
-        break;
-      case DOWN:
-        putchar('v');
-        break;
-      case LEFT:
-        putchar('<');
-        break;
-      case RIGHT:
-        putchar('>');
-        break;
-      case 0:
-        putchar(f->grid[r][c].c);
-        break;
-      default:
-        printf("%d", !!(x & UP) + !!(x & DOWN) + !!(x & LEFT) + !!(x & RIGHT));
-      }
-    }
-    printf("\n");
-  }
-  printf("\n");
-}
-
 void count_energized(facility *f) {
   int energized = 0;
   for (int r = 0; r < f->rows; ++r) {
     for (int c = 0; c < f->cols; ++c) {
-      if (f->grid[r][c].activation) {
-        putchar('#');
-      } else {
-        putchar('.');
-      }
       energized += !!f->grid[r][c].activation;
     }
-    printf("\n");
   }
-  printf("energized: %d\n", energized);
+  printf("%d\n", energized);
 }
 
-#include <assert.h>
 int main(void) {
   cpt_buffer2d input = cpt_slurp2d_stdin();
 
@@ -144,10 +104,7 @@ int main(void) {
       .rows = rows,
       .cols = cols,
   };
-  print(&f);
   cast_beam(&f, 0, 0, RIGHT);
-  print(&f);
-
   count_energized(&f);
 
   free(data);

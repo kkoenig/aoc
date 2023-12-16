@@ -1,108 +1,150 @@
-#include "assert.h"
 #include "cpt.h"
-#include "ctype.h"
-#include "math.h"
+#include <stdlib.h>
 
-int hash(const char *s, const int size) {
-  int v = 0;
-  for (int i = 0; i < size; ++i) {
-    v += s[i];
-    v *= 17;
-    v = v % 256;
-  }
-
-  return v;
-}
+enum {
+  UP = 0x01,
+  DOWN = 0x2,
+  LEFT = 0x4,
+  RIGHT = 0x8,
+};
 
 typedef struct {
-  const char *label;
-  int label_size;
-  int focal_length;
-} lens;
+  char c;
+} cell;
+
 typedef struct {
-#define MAX_LENSES 10
-  lens lenses[10];
-  int num_lenses;
-} box;
+  cell **grid;
+  int **activation_map;
+  int rows, cols;
+} facility;
 
-static void add(box *box, const char *label, const int label_size,
-                uint32_t value) {
-  assert(box->num_lenses < MAX_LENSES);
+void cast_beam(facility *f, int r, int c, int direction) {
+  while (r >= 0 && r < f->rows && c >= 0 && c < f->cols) {
+    cell *current = &f->grid[r][c];
+    if (f->activation_map[r][c] & direction) {
+      break; // detect cycle
+    }
+    f->activation_map[r][c] |= direction;
 
-  for (int i = 0; i < box->num_lenses; ++i) {
-    lens *l = box->lenses + i;
-    if (l->label_size == label_size && !strncmp(l->label, label, label_size)) {
-      box->lenses[i].focal_length = value;
+    if (current->c == '|' && (direction == LEFT || direction == RIGHT)) {
+      cast_beam(f, r - 1, c, UP);
+      cast_beam(f, r + 1, c, DOWN);
       return;
     }
-  }
-  box->lenses[box->num_lenses++] = (lens){
-      .label = label,
-      .label_size = label_size,
-      .focal_length = value,
-  };
-}
-
-static void rm(box *box, const char *label, const int label_size) {
-  int i = 0;
-  for (; i < box->num_lenses; ++i) {
-    lens *l = box->lenses + i;
-    if (l->label_size == label_size && !strncmp(l->label, label, label_size)) {
+    if (current->c == '-' && (direction == UP || direction == DOWN)) {
+      cast_beam(f, r, c - 1, LEFT);
+      cast_beam(f, r, c + 1, RIGHT);
+      return;
+    }
+    if (current->c == '/') {
+      if (direction == LEFT) {
+        direction = DOWN;
+      } else if (direction == RIGHT) {
+        direction = UP;
+      } else if (direction == DOWN) {
+        direction = LEFT;
+      } else if (direction == UP) {
+        direction = RIGHT;
+      }
+    }
+    if (current->c == '\\') {
+      if (direction == LEFT) {
+        direction = UP;
+      } else if (direction == RIGHT) {
+        direction = DOWN;
+      } else if (direction == DOWN) {
+        direction = RIGHT;
+      } else if (direction == UP) {
+        direction = LEFT;
+      }
+    }
+    switch (direction) {
+    case UP:
+      --r;
+      break;
+    case DOWN:
+      ++r;
+      break;
+    case LEFT:
+      --c;
+      break;
+    case RIGHT:
+      ++c;
       break;
     }
   }
-  if (i == box->num_lenses) {
-    return;
-  }
+}
 
-  for (; i < box->num_lenses - 1; ++i) {
-    box->lenses[i] = box->lenses[i + 1];
+int count_energized(facility *f) {
+  int energized = 0;
+  for (int r = 0; r < f->rows; ++r) {
+    for (int c = 0; c < f->cols; ++c) {
+      energized += !!f->activation_map[r][c];
+    }
   }
-  --box->num_lenses;
+  return energized;
 }
 
 int main(void) {
-  cpt_buffer input = cpt_slurp_stdin();
+  cpt_buffer2d input = cpt_slurp2d_stdin();
 
-  box boxes[256] = {0};
-
-  for (size_t i = 0; i < input.size;) {
-    while (i < input.size && isspace(input.data[i])) {
-      ++i;
-    }
-    size_t j = i;
-    while (j < input.size && input.data[j] != ',' && !isspace(input.data[j])) {
-      ++j;
-    }
-    size_t k = i;
-    while (k < j && input.data[k] != '=' && input.data[k] != '-') {
-      ++k;
-    }
-    const char *label = input.data + i;
-    const int label_size = k - i;
-    const int op = input.data[k];
-    const int box_index = hash(label, label_size);
-    if ('=' == op) {
-      const int lv = *(input.data + k + 1) - '0';
-      add(boxes + box_index, label, label_size, lv);
-    } else {
-      assert(op == '-');
-      rm(boxes + box_index, label, label_size);
-    }
-
-    i = j + 1;
-  }
-  uint64_t total = 0;
-  for (size_t i = 0; i < 256; ++i) {
-    box *b = boxes + i;
-    if (!b->num_lenses) {
-      continue;
-    }
-    for (int j = 0; j < b->num_lenses; ++j) {
-      total += (i + 1) * (j + 1) * b->lenses[j].focal_length;
+  const int cols = input.max_column_width;
+  const int rows = input.num_rows;
+  cell *data = calloc(1, rows * cols * sizeof(cell));
+  cell **grid = calloc(1, input.num_rows * sizeof(cell *));
+  int *activations_data = calloc(1, rows * cols * sizeof(int));
+  int **activations = calloc(1, input.num_rows * sizeof(int *));
+  for (size_t r = 0; r < input.num_rows; ++r) {
+    grid[r] = data + r * cols;
+    activations[r] = activations_data + r * cols;
+    for (size_t c = 0; c < input.max_column_width; ++c) {
+      grid[r][c] =
+          (cell){.c = input.store.data[r * (input.max_column_width + 1) + c]};
     }
   }
-  printf("%llu\n", total);
-  cpt_buffer_free(&input);
+
+  facility f = {
+      .grid = grid,
+      .activation_map = activations,
+      .rows = rows,
+      .cols = cols,
+  };
+  cast_beam(&f, 0, 0, RIGHT);
+  int max = 0;
+  int count = 0;
+  for (int r = 0; r < rows; ++r) {
+    {
+      memset(activations_data, 0, rows * cols * sizeof(int));
+      cast_beam(&f, r, 0, RIGHT);
+      count = count_energized(&f);
+      max = CPT_MAX(count, max);
+    }
+    {
+      memset(activations_data, 0, rows * cols * sizeof(int));
+      cast_beam(&f, r, cols - 1, LEFT);
+      count = count_energized(&f);
+      max = CPT_MAX(count, max);
+    }
+  }
+  for (int c = 0; c < cols; ++c) {
+    {
+      memset(activations_data, 0, rows * cols * sizeof(int));
+      cast_beam(&f, 0, c, DOWN);
+      count = count_energized(&f);
+      max = CPT_MAX(count, max);
+    }
+    {
+      memset(activations_data, 0, rows * cols * sizeof(int));
+      cast_beam(&f, rows - 1, c, UP);
+      count = count_energized(&f);
+      max = CPT_MAX(count, max);
+    }
+  }
+  printf("%d\n", max);
+
+  free(activations);
+  free(grid);
+  free(data);
+  cpt_buffer2d_free(&input);
   return 0;
 }
