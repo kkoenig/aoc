@@ -1,12 +1,12 @@
 #include "cpt.h"
 #include <stdlib.h>
 
-enum {
+typedef enum {
   UP = 0x01,
   DOWN = 0x2,
   LEFT = 0x4,
   RIGHT = 0x8,
-};
+} dir;
 
 typedef struct {
   char c;
@@ -17,6 +17,31 @@ typedef struct {
   int **activation_map;
   int rows, cols;
 } facility;
+
+int reflect(const dir d) {
+  switch (d) {
+  case LEFT:
+    return DOWN;
+  case RIGHT:
+    return UP;
+  case DOWN:
+    return LEFT;
+  case UP:
+    return RIGHT;
+  }
+}
+int flip(const dir d) {
+  switch (d) {
+  case LEFT:
+    return RIGHT;
+  case RIGHT:
+    return LEFT;
+  case DOWN:
+    return UP;
+  case UP:
+    return DOWN;
+  }
+}
 
 void cast_beam(facility *f, int r, int c, int direction) {
   while (r >= 0 && r < f->rows && c >= 0 && c < f->cols) {
@@ -37,26 +62,11 @@ void cast_beam(facility *f, int r, int c, int direction) {
       return;
     }
     if (current->c == '/') {
-      if (direction == LEFT) {
-        direction = DOWN;
-      } else if (direction == RIGHT) {
-        direction = UP;
-      } else if (direction == DOWN) {
-        direction = LEFT;
-      } else if (direction == UP) {
-        direction = RIGHT;
-      }
+      direction = reflect(direction);
     }
+
     if (current->c == '\\') {
-      if (direction == LEFT) {
-        direction = UP;
-      } else if (direction == RIGHT) {
-        direction = DOWN;
-      } else if (direction == DOWN) {
-        direction = RIGHT;
-      } else if (direction == UP) {
-        direction = LEFT;
-      }
+      direction = flip(reflect(direction));
     }
     switch (direction) {
     case UP:
@@ -75,7 +85,7 @@ void cast_beam(facility *f, int r, int c, int direction) {
   }
 }
 
-int count_energized(facility *f) {
+int count(facility *f) {
   int energized = 0;
   for (int r = 0; r < f->rows; ++r) {
     for (int c = 0; c < f->cols; ++c) {
@@ -109,39 +119,26 @@ int main(void) {
       .rows = rows,
       .cols = cols,
   };
-  cast_beam(&f, 0, 0, RIGHT);
   int max = 0;
-  int count = 0;
   for (int r = 0; r < rows; ++r) {
-    {
-      memset(activations_data, 0, rows * cols * sizeof(int));
-      cast_beam(&f, r, 0, RIGHT);
-      count = count_energized(&f);
-      max = CPT_MAX(count, max);
-    }
-    {
-      memset(activations_data, 0, rows * cols * sizeof(int));
-      cast_beam(&f, r, cols - 1, LEFT);
-      count = count_energized(&f);
-      max = CPT_MAX(count, max);
-    }
+    memset(activations_data, 0, rows * cols * sizeof(int));
+    cast_beam(&f, r, 0, RIGHT);
+    max = CPT_MAX(max, count(&f));
+    memset(activations_data, 0, rows * cols * sizeof(int));
+    cast_beam(&f, r, cols - 1, LEFT);
+    max = CPT_MAX(max, count(&f));
   }
   for (int c = 0; c < cols; ++c) {
-    {
-      memset(activations_data, 0, rows * cols * sizeof(int));
-      cast_beam(&f, 0, c, DOWN);
-      count = count_energized(&f);
-      max = CPT_MAX(count, max);
-    }
-    {
-      memset(activations_data, 0, rows * cols * sizeof(int));
-      cast_beam(&f, rows - 1, c, UP);
-      count = count_energized(&f);
-      max = CPT_MAX(count, max);
-    }
+    memset(activations_data, 0, rows * cols * sizeof(int));
+    cast_beam(&f, 0, c, DOWN);
+    max = CPT_MAX(max, count(&f));
+    memset(activations_data, 0, rows * cols * sizeof(int));
+    cast_beam(&f, rows - 1, c, UP);
+    max = CPT_MAX(max, count(&f));
   }
   printf("%d\n", max);
 
+  free(activations_data);
   free(activations);
   free(grid);
   free(data);
