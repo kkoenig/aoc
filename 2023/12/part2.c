@@ -79,7 +79,6 @@ int count_matches(input i, state s) {
     return 0; // todo: check other index?
   }
   int total = 0;
-  const int current_group = i.groups[s.g_index];
   while (s.s_index < i.num_splits) {
     const split *split = i.splits + s.s_index;
     while (s.n_index < split->size) {

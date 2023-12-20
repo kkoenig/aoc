@@ -1,10 +1,15 @@
 SHELL  := bash
 CC     := clang
-CFLAGS := -O3 -g \
+CFLAGS := -O3 -g3 \
+		  -std=c11\
+		  -fno-omit-frame-pointer \
 		  -I./deps \
 		  -Wextra \
-		  -Wextra \
+		  -Werror \
 		  -Wall \
+		  -Wdouble-promotion \
+		  -Wno-unused-parameter \
+		  -Wno-unused-function \
 		  -fsanitize=undefined \
 		  -fsanitize=integer \
 		  -fsanitize=address
